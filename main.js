@@ -7,6 +7,28 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// ===== NEW FUNCTION: Search Functionality =====
+function searchRecords() {
+  rl.question('Enter search keyword: ', keyword => {
+    const records = db.listRecords();
+    const results = records.filter(r => 
+      r.name.toLowerCase().includes(keyword.toLowerCase()) ||
+      r.id.toString().includes(keyword)
+    );
+    
+    if (results.length === 0) {
+      console.log('No records found.');
+    } else {
+      console.log(`\nFound ${results.length} matching record(s):`);
+      results.forEach((r, index) => {
+        console.log(`${index + 1}. ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`);
+      });
+    }
+    menu();
+  });
+}
+// ===== END NEW FUNCTION =====
+
 function menu() {
   console.log(`
 ===== NodeVault =====
@@ -14,10 +36,10 @@ function menu() {
 2. List Records
 3. Update Record
 4. Delete Record
-5. Exit
+5. Search Records
+6. Exit
 =====================
   `);
-
   rl.question('Choose option: ', ans => {
     switch (ans.trim()) {
       case '1':
@@ -29,14 +51,12 @@ function menu() {
           });
         });
         break;
-
       case '2':
         const records = db.listRecords();
         if (records.length === 0) console.log('No records found.');
         else records.forEach(r => console.log(`ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`));
         menu();
         break;
-
       case '3':
         rl.question('Enter record ID to update: ', id => {
           rl.question('New name: ', name => {
@@ -48,7 +68,6 @@ function menu() {
           });
         });
         break;
-
       case '4':
         rl.question('Enter record ID to delete: ', id => {
           const deleted = db.deleteRecord(Number(id));
@@ -56,12 +75,13 @@ function menu() {
           menu();
         });
         break;
-
-      case '5':
+      case '5':  // NEW: Search functionality
+        searchRecords();
+        break;
+      case '6':  // CHANGED: Exit moved from 5 to 6
         console.log('👋 Exiting NodeVault...');
         rl.close();
         break;
-
       default:
         console.log('Invalid option.');
         menu();
