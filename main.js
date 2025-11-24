@@ -1,6 +1,6 @@
 const readline = require('readline');
 const db = require('./db');
-const fs = require('fs');  // ADDED for export
+const fs = require('fs');
 require('./events/logger');
 
 const rl = readline.createInterface({
@@ -127,6 +127,58 @@ function exportData() {
   menu();
 }
 
+// ===== FUNCTION: Display Vault Statistics =====
+function displayStatistics() {
+  const records = db.listRecords();
+  
+  if (records.length === 0) {
+    console.log('\n⚠️  No data available for statistics.\n');
+    menu();
+    return;
+  }
+  
+  // Total records
+  const totalRecords = records.length;
+  
+  // Last modified - vault.json file modification time
+  let lastModified = 'N/A';
+  try {
+    const stats = fs.statSync('./data/vault.json');
+    lastModified = new Date(stats.mtime).toLocaleString();
+  } catch (err) {
+    lastModified = new Date().toLocaleString();
+  }
+  
+  // Find longest name
+  let longestName = records[0].name;
+  records.forEach(record => {
+    if (record.name.length > longestName.length) {
+      longestName = record.name;
+    }
+  });
+  
+  // Earliest and latest records (by ID which is timestamp)
+  const ids = records.map(r => r.id);
+  const earliestId = Math.min(...ids);
+  const latestId = Math.max(...ids);
+  
+  const earliestDate = new Date(earliestId).toLocaleDateString();
+  const latestDate = new Date(latestId).toLocaleDateString();
+  
+  // Display statistics
+  console.log('\n========================================');
+  console.log('           VAULT STATISTICS');
+  console.log('========================================');
+  console.log(`Total Records: ${totalRecords}`);
+  console.log(`Last Modified: ${lastModified}`);
+  console.log(`Longest Name: ${longestName} (${longestName.length} characters)`);
+  console.log(`Earliest Record: ${earliestDate}`);
+  console.log(`Latest Record: ${latestDate}`);
+  console.log('========================================\n');
+  
+  menu();
+}
+
 function menu() {
   console.log(`
 ===== NodeVault =====
@@ -137,7 +189,8 @@ function menu() {
 5. Search Records
 6. Sort Records
 7. Export Data
-8. Exit
+8. View Vault Statistics
+9. Exit
 =====================
   `);
   rl.question('Choose option: ', ans => {
@@ -175,16 +228,19 @@ function menu() {
           menu();
         });
         break;
-      case '5':
+      case '5':  // Search
         searchRecords();
         break;
-      case '6':
+      case '6':  // Sort
         sortRecords();
         break;
-      case '7':  // Export - NEW
+      case '7':  // Export
         exportData();
         break;
-      case '8':  // Exit - CHANGED
+      case '8':  // Statistics - NEW
+        displayStatistics();
+        break;
+      case '9':  // Exit - CHANGED
         console.log('👋 Exiting NodeVault...');
         rl.close();
         break;
