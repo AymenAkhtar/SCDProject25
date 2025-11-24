@@ -7,7 +7,7 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-// ===== NEW FUNCTION: Search Functionality =====
+// ===== FUNCTION: Search Functionality =====
 function searchRecords() {
   rl.question('Enter search keyword: ', keyword => {
     const records = db.listRecords();
@@ -19,15 +19,72 @@ function searchRecords() {
     if (results.length === 0) {
       console.log('No records found.');
     } else {
-      console.log(`\nFound ${results.length} matching record(s):`);
+      console.log(`\nFound ${results.length} matching record(s):`);  // FIXED
       results.forEach((r, index) => {
-        console.log(`${index + 1}. ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`);
+        console.log(`${index + 1}. ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`);  // FIXED
       });
     }
     menu();
   });
 }
-// ===== END NEW FUNCTION =====
+
+// ===== FUNCTION: Sorting Capability =====
+function sortRecords() {
+  const records = db.listRecords();
+  
+  if (records.length === 0) {
+    console.log('No records to sort.');
+    menu();
+    return;
+  }
+  
+  console.log('\nSort by:');
+  console.log('1. Name');
+  console.log('2. Creation Date (ID)');
+  
+  rl.question('Choose field: ', field => {
+    console.log('\nOrder:');
+    console.log('1. Ascending');
+    console.log('2. Descending');
+    
+    rl.question('Choose order: ', order => {
+      let sorted = [...records]; // Copy array
+      
+      if (field.trim() === '1') {
+        // Sort by name
+        sorted.sort((a, b) => {
+          if (order.trim() === '1') {
+            return a.name.localeCompare(b.name); // Ascending
+          } else {
+            return b.name.localeCompare(a.name); // Descending
+          }
+        });
+        console.log('\nSorted Records (by Name):');
+      } else if (field.trim() === '2') {
+        // Sort by ID (represents creation date)
+        sorted.sort((a, b) => {
+          if (order.trim() === '1') {
+            return a.id - b.id; // Ascending (oldest first)
+          } else {
+            return b.id - a.id; // Descending (newest first)
+          }
+        });
+        console.log('\nSorted Records (by Creation Date):');
+      } else {
+        console.log('Invalid choice.');
+        menu();
+        return;
+      }
+      
+      // Display sorted records
+      sorted.forEach((r, index) => {
+        console.log(`${index + 1}. ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`);
+      });
+      
+      menu();
+    });
+  });
+}
 
 function menu() {
   console.log(`
@@ -37,7 +94,8 @@ function menu() {
 3. Update Record
 4. Delete Record
 5. Search Records
-6. Exit
+6. Sort Records
+7. Exit
 =====================
   `);
   rl.question('Choose option: ', ans => {
@@ -54,7 +112,7 @@ function menu() {
       case '2':
         const records = db.listRecords();
         if (records.length === 0) console.log('No records found.');
-        else records.forEach(r => console.log(`ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`));
+        else records.forEach(r => console.log(`ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`));  // FIXED
         menu();
         break;
       case '3':
@@ -75,10 +133,13 @@ function menu() {
           menu();
         });
         break;
-      case '5':  // NEW: Search functionality
+      case '5':  // Search functionality
         searchRecords();
         break;
-      case '6':  // CHANGED: Exit moved from 5 to 6
+      case '6':  // Sort functionality - NEW
+        sortRecords();
+        break;
+      case '7':  // Exit - CHANGED from 6 to 7
         console.log('👋 Exiting NodeVault...');
         rl.close();
         break;
