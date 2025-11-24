@@ -1,6 +1,7 @@
 const readline = require('readline');
 const db = require('./db');
-require('./events/logger'); // Initialize event logger
+const fs = require('fs');  // ADDED for export
+require('./events/logger');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -19,9 +20,9 @@ function searchRecords() {
     if (results.length === 0) {
       console.log('No records found.');
     } else {
-      console.log(`\nFound ${results.length} matching record(s):`);  // FIXED
+      console.log(`\nFound ${results.length} matching record(s):`);
       results.forEach((r, index) => {
-        console.log(`${index + 1}. ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`);  // FIXED
+        console.log(`${index + 1}. ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`);
       });
     }
     menu();
@@ -48,25 +49,23 @@ function sortRecords() {
     console.log('2. Descending');
     
     rl.question('Choose order: ', order => {
-      let sorted = [...records]; // Copy array
+      let sorted = [...records];
       
       if (field.trim() === '1') {
-        // Sort by name
         sorted.sort((a, b) => {
           if (order.trim() === '1') {
-            return a.name.localeCompare(b.name); // Ascending
+            return a.name.localeCompare(b.name);
           } else {
-            return b.name.localeCompare(a.name); // Descending
+            return b.name.localeCompare(a.name);
           }
         });
         console.log('\nSorted Records (by Name):');
       } else if (field.trim() === '2') {
-        // Sort by ID (represents creation date)
         sorted.sort((a, b) => {
           if (order.trim() === '1') {
-            return a.id - b.id; // Ascending (oldest first)
+            return a.id - b.id;
           } else {
-            return b.id - a.id; // Descending (newest first)
+            return b.id - a.id;
           }
         });
         console.log('\nSorted Records (by Creation Date):');
@@ -76,7 +75,6 @@ function sortRecords() {
         return;
       }
       
-      // Display sorted records
       sorted.forEach((r, index) => {
         console.log(`${index + 1}. ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`);
       });
@@ -84,6 +82,49 @@ function sortRecords() {
       menu();
     });
   });
+}
+
+// ===== FUNCTION: Export to Text File =====
+function exportData() {
+  const records = db.listRecords();
+  const date = new Date();
+  
+  let content = `===========================================\n`;
+  content += `        VAULT DATA EXPORT\n`;
+  content += `===========================================\n`;
+  content += `Export Date: ${date.toLocaleDateString()}\n`;
+  content += `Export Time: ${date.toLocaleTimeString()}\n`;
+  content += `Total Records: ${records.length}\n`;
+  content += `File Name: export.txt\n`;
+  content += `===========================================\n\n`;
+  
+  if (records.length === 0) {
+    content += `No records to export.\n`;
+  } else {
+    content += `RECORDS:\n`;
+    content += `-------------------------------------------\n\n`;
+    
+    records.forEach((record, index) => {
+      content += `Record ${index + 1}:\n`;
+      content += `  ID: ${record.id}\n`;
+      content += `  Name: ${record.name}\n`;
+      content += `  Value: ${record.value}\n`;
+      content += `-------------------------------------------\n`;
+    });
+  }
+  
+  content += `\n===========================================\n`;
+  content += `           END OF EXPORT\n`;
+  content += `===========================================\n`;
+  
+  try {
+    fs.writeFileSync('export.txt', content);
+    console.log('✅ Data exported successfully to export.txt');
+  } catch (error) {
+    console.log('❌ Error exporting data:', error.message);
+  }
+  
+  menu();
 }
 
 function menu() {
@@ -95,7 +136,8 @@ function menu() {
 4. Delete Record
 5. Search Records
 6. Sort Records
-7. Exit
+7. Export Data
+8. Exit
 =====================
   `);
   rl.question('Choose option: ', ans => {
@@ -112,7 +154,7 @@ function menu() {
       case '2':
         const records = db.listRecords();
         if (records.length === 0) console.log('No records found.');
-        else records.forEach(r => console.log(`ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`));  // FIXED
+        else records.forEach(r => console.log(`ID: ${r.id} | Name: ${r.name} | Value: ${r.value}`));
         menu();
         break;
       case '3':
@@ -133,13 +175,16 @@ function menu() {
           menu();
         });
         break;
-      case '5':  // Search functionality
+      case '5':
         searchRecords();
         break;
-      case '6':  // Sort functionality - NEW
+      case '6':
         sortRecords();
         break;
-      case '7':  // Exit - CHANGED from 6 to 7
+      case '7':  // Export - NEW
+        exportData();
+        break;
+      case '8':  // Exit - CHANGED
         console.log('👋 Exiting NodeVault...');
         rl.close();
         break;
