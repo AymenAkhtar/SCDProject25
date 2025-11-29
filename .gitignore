@@ -4,3 +4,4 @@ export.txt
 .env
 *.log
 .DS_Store
+data/vault.json
